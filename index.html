@@ -3,27 +3,83 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Keyboard Layout Auto-Fix</title>
+  <title>Layout Auto-Fix</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⌨️</text></svg>">
   <style>
-    body { font-family: sans-serif; padding: 2rem; background: #f9f9f9; }
-    textarea { width: 100%; padding: 1rem; margin-top: 1rem; font-size: 1rem; }
-    h1 { margin-bottom: 1rem; }
-    label { font-weight: bold; margin-top: 1rem; display: block; }
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: var(--bg);
+      color: var(--fg);
+      transition: background 0.3s, color 0.3s;
+    }
+    :root {
+      --bg: #f9f9f9;
+      --fg: #000;
+    }
+    .dark {
+      --bg: #1e1e1e;
+      --fg: #fff;
+    }
+    textarea {
+      width: 100%;
+      padding: 1rem;
+      margin-top: 1rem;
+      font-size: 1rem;
+      background: #fff;
+      color: #000;
+      box-sizing: border-box;
+    }
+    h1 {
+      margin-bottom: 1rem;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 1rem;
+      display: block;
+    }
+    .controls {
+      margin-top: 1rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+      border: none;
+      background-color: #4CAF50;
+      color: white;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
   </style>
 </head>
 <body>
   <h1>Keyboard Layout Auto-Fixer (RU ↔ EN)</h1>
-  <label for="inputText">Paste or type text:</label>
-  <textarea id="inputText" rows="6" placeholder="Type or paste text with wrong layout..."></textarea>
+  <label for="inputText">Type or paste text:</label>
+  <textarea id="inputText" rows="6" placeholder="Wrong layout text..."></textarea>
   <label for="outputText">Corrected text:</label>
   <textarea id="outputText" rows="6" readonly></textarea>
 
+  <div class="controls">
+    <button onclick="copyOutput()">📋 Copy</button>
+    <button onclick="clearText()">🧹 Clear</button>
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+
   <script>
     const ruKeys = "ёйцукенгшщзхъфывапролджэячсмитьбю.,ЁЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ?";
-    const enKeys = "`qwertyuiop[]asdfghjkl;'zxcvbnm,./~QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?";
+    const enKeys = "`qwertyuiop[]asdfghjkl;'zxcvbnm,./~QWERTYUIOP{}ASDFGHJKL:\\\"ZXCVBNM<>?";
 
     const ruSet = new Set(ruKeys);
     const enSet = new Set(enKeys);
+
+    const inputField = document.getElementById("inputText");
+    const outputField = document.getElementById("outputText");
 
     function detectLanguage(text) {
       let ruCount = 0, enCount = 0;
@@ -44,12 +100,42 @@
       return map;
     }
 
-    document.getElementById("inputText").addEventListener("input", function() {
-      const input = this.value;
+    function updateTranslation() {
+      const input = inputField.value;
       const detected = detectLanguage(input);
       const map = createTranslationMap(detected);
       const translated = input.split('').map(char => map[char] || char).join('');
-      document.getElementById("outputText").value = translated;
+      outputField.value = translated;
+    }
+
+    function copyOutput() {
+      outputField.select();
+      document.execCommand("copy");
+    }
+
+    function clearText() {
+      inputField.value = "";
+      outputField.value = "";
+      inputField.focus();
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+    }
+
+    inputField.addEventListener("input", updateTranslation);
+
+    window.onload = () => {
+      inputField.focus();
+    };
+
+    document.addEventListener("keydown", function(event) {
+      if (event.ctrlKey && event.key === "`") {
+        const current = detectLanguage(inputField.value);
+        const map = createTranslationMap(current === "ru" ? "en" : "ru");
+        const translated = inputField.value.split('').map(char => map[char] || char).join('');
+        outputField.value = translated;
+      }
     });
   </script>
 </body>

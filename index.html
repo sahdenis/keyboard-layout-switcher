@@ -3,45 +3,54 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Keyboard Layout Switcher</title>
+  <title>Keyboard Layout Auto-Fix</title>
   <style>
     body { font-family: sans-serif; padding: 2rem; background: #f9f9f9; }
-    textarea, button { width: 100%; padding: 1rem; margin-top: 1rem; font-size: 1rem; }
-    button { background-color: #4CAF50; color: white; border: none; cursor: pointer; }
-    button:hover { background-color: #45a049; }
+    textarea { width: 100%; padding: 1rem; margin-top: 1rem; font-size: 1rem; }
+    h1 { margin-bottom: 1rem; }
+    label { font-weight: bold; margin-top: 1rem; display: block; }
   </style>
 </head>
 <body>
-  <h1>Keyboard Layout Fixer (RU ↔ EN)</h1>
-  <p>Paste text that was typed with the wrong keyboard layout (e.g. Russian instead of English or vice versa):</p>
-  <textarea id="inputText" rows="6" placeholder="Paste your text here..."></textarea>
-  <button onclick="fixLayout('ru')">Fix from Russian to English</button>
-  <button onclick="fixLayout('en')">Fix from English to Russian</button>
-  <textarea id="outputText" rows="6" placeholder="Corrected text will appear here..."></textarea>
+  <h1>Keyboard Layout Auto-Fixer (RU ↔ EN)</h1>
+  <label for="inputText">Paste or type text:</label>
+  <textarea id="inputText" rows="6" placeholder="Type or paste text with wrong layout..."></textarea>
+  <label for="outputText">Corrected text:</label>
+  <textarea id="outputText" rows="6" readonly></textarea>
 
   <script>
     const ruKeys = "ёйцукенгшщзхъфывапролджэячсмитьбю.,ЁЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ?";
     const enKeys = "`qwertyuiop[]asdfghjkl;'zxcvbnm,./~QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?";
 
-    function fixLayout(fromLang) {
-      const input = document.getElementById("inputText").value;
-      let mapFrom, mapTo;
-      if (fromLang === 'ru') {
-        mapFrom = ruKeys;
-        mapTo = enKeys;
-      } else {
-        mapFrom = enKeys;
-        mapTo = ruKeys;
-      }
+    const ruSet = new Set(ruKeys);
+    const enSet = new Set(enKeys);
 
-      const translationMap = {};
-      for (let i = 0; i < mapFrom.length; i++) {
-        translationMap[mapFrom[i]] = mapTo[i] || mapFrom[i];
+    function detectLanguage(text) {
+      let ruCount = 0, enCount = 0;
+      for (let char of text) {
+        if (ruSet.has(char)) ruCount++;
+        if (enSet.has(char)) enCount++;
       }
-
-      const translated = input.split('').map(char => translationMap[char] || char).join('');
-      document.getElementById("outputText").value = translated;
+      return ruCount > enCount ? 'ru' : 'en';
     }
+
+    function createTranslationMap(fromLang) {
+      const map = {};
+      const fromKeys = fromLang === 'ru' ? ruKeys : enKeys;
+      const toKeys = fromLang === 'ru' ? enKeys : ruKeys;
+      for (let i = 0; i < fromKeys.length; i++) {
+        map[fromKeys[i]] = toKeys[i] || fromKeys[i];
+      }
+      return map;
+    }
+
+    document.getElementById("inputText").addEventListener("input", function() {
+      const input = this.value;
+      const detected = detectLanguage(input);
+      const map = createTranslationMap(detected);
+      const translated = input.split('').map(char => map[char] || char).join('');
+      document.getElementById("outputText").value = translated;
+    });
   </script>
 </body>
 </html>
